@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS Guest (
   phone       VARCHAR(20) NOT NULL,
   email       VARCHAR(100),
   idNumber    VARCHAR(30) UNIQUE NOT NULL,
-  CONSTRAINT chk_phone CHECK(
+  CONSTRAINT chk_phone_guest CHECK(
 	phone like '+94%')      
 );
 
@@ -55,15 +55,15 @@ CREATE TABLE IF NOT EXISTS Booking (
   rate          NUMERIC(10,2) UNSIGNED NOT NULL, -- Snapshot of the rate at the time of booking
   checkInDate   DATETIME NOT NULL,
   checkOutDate  DATETIME NOT NULL,
-  numGuests     INT NOT NULL UNSIGNED,
+  numGuests     INT UNSIGNED NOT NULL,
   bookingStatus ENUM('Booked','CheckedIn','CheckedOut','Cancelled') NOT NULL DEFAULT 'Booked',
   CONSTRAINT fk_guestID 
     FOREIGN KEY (guestID) REFERENCES Guest(guestID)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_branchID 
+  CONSTRAINT fk_branchID_booking 
     FOREIGN KEY (branchID) REFERENCES Branch(branchID)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_roomID 
+  CONSTRAINT fk_roomID_booking 
     FOREIGN KEY (roomID) REFERENCES Room(roomID)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT chk_date CHECK(checkInDate<=checkOutDate)
@@ -73,17 +73,17 @@ CREATE TABLE IF NOT EXISTS Chargeble_Service (
   serviceID   INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   serviceType ENUM( 'Spa services', 'Pool access', 'room service', 'laundry', 'minibar usage') NOT NULL, 
   unit ENUM('per person','per kg', 'per item', 'per request'), 
-  ratePerUnit  DECIMAL(10,2) NOT NULL UNSIGNED
+  ratePerUnit  DECIMAL(10,2) UNSIGNED NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Service_Usage ( 
   usageID	BIGINT UNSIGNED PRIMARY KEY NOT NULL,
   bookingID  BIGINT UNSIGNED NOT NULL,
   serviceID  INT UNSIGNED NOT NULL,
-  rate  DECIMAL(10,2) NOT NULL UNSIGNED,     -- Snapshot of the rate at the time of service usage
-  quantity   INT NOT NULL UNSIGNED DEFAULT 1,
+  rate  DECIMAL(10,2) UNSIGNED NOT NULL,     -- Snapshot of the rate at the time of service usage
+  quantity   INT UNSIGNED NOT NULL DEFAULT 1,
   usedAt	TIMESTAMP NOT NULL,
-  CONSTRAINT fk_bookingID 
+  CONSTRAINT fk_bookingID_service 
     FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_serviceID 
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS Late_Checkout (
 	bookingID BIGINT UNSIGNED PRIMARY KEY NOT NULL,
 	checkOutTime TIMESTAMP,
 	amount NUMERIC(10,2) UNSIGNED,
-  CONSTRAINT fk_bookingID 
+  CONSTRAINT fk_bookingID_late 
     FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
     ON DELETE RESTRICT ON UPDATE CASCADE
 
@@ -111,10 +111,10 @@ CREATE TABLE IF NOT EXISTS Tax_Policy (
 CREATE TABLE IF NOT EXISTS Discount (
   discountCode  INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   discountName  VARCHAR(100) NOT NULL,            
-  condition     VARCHAR(200),                     
+  discountCondition     VARCHAR(200),                     
   discountValue   DECIMAL(5,2) UNSIGNED NOT NULL,            
   validFrom     DATE NOT NULL,
-  validTo       DATE NOT NULL
+  validTo       DATE NOT NULL,
   CONSTRAINT chk_dateValidity CHECK(validTo>validFrom)
 ) ;
 
@@ -124,24 +124,25 @@ CREATE TABLE IF NOT EXISTS Invoice (
   policyID        INT UNSIGNED NULL,         
   discountCode    INT UNSIGNED NULL,         
   paymentPlan     ENUM('Full','Installment') NOT NULL DEFAULT 'Full',
-  roomCharges     DECIMAL(15,2) NOT NULL UNSIGNED DEFAULT 0.00,    --Must be saved becasue the rates can change daily but once offered rates cannot change
-  serviceCharges  DECIMAL(15,2) NOT NULL UNSIGNED DEFAULT 0.00, 
-  taxAmount       DECIMAL(10,2) NOT Null UNSIGNED DEFAULT 0.00,
-  discountAmount  DECIMAL(10,2) NOT NULL UNSIGNED DEFAULT 0.00,
-  settledAmount   DECIMAL(15,2) NOT NULL UNSIGNED DEFAULT 0.00,   
+  roomCharges     DECIMAL(15,2) UNSIGNED NOT NULL DEFAULT 0.00,    -- Must be saved becasue the rates can change daily but once offered rates cannot change
+  serviceCharges  DECIMAL(15,2) UNSIGNED NOT Null DEFAULT 0.00,
+  discountAmount  DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0.00,
+  settledAmount   DECIMAL(15,2) UNSIGNED NOT NULL DEFAULT 0.00,   
   invoiceStatus   ENUM('Pending','Partially Paid','Paid','Cancelled') NOT NULL DEFAULT 'Pending',
-  CONSTRAINT fk_bookingID 
+  CONSTRAINT fk_bookingID_invoice
     FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_policyID 
+  CONSTRAINT fk_policyID
     FOREIGN KEY (policyID) REFERENCES Tax_Policy(policyID)
     ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_discountCode 
     FOREIGN KEY (discountCode) REFERENCES Discount(discountCode)
-    ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT chk_paidAmount CHECK(settledAmount<=(roomCharges+serviceCharges+taxAmount-discountAmount))
-
+    ON DELETE SET NULL ON UPDATE CASCADE
 );
+
+ALTER TABLE Invoice
+ADD COLUMN taxAmount DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0.00,
+ADD CONSTRAINT chk_paidAmount CHECK(settledAmount<=(roomCharges+serviceCharges+taxAmount-discountAmount));
 
 CREATE TABLE IF NOT EXISTS Payment (
   transactionID   BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -166,7 +167,7 @@ CREATE TABLE IF NOT EXISTS User_Account (
   last_name   VARCHAR(20) NOT NULL,
   phone       VARCHAR(15),
   email       VARCHAR(30) UNIQUE,
-  CONSTRAINT fk_branchID 
+  CONSTRAINT fk_branchID_user
     FOREIGN KEY (branchID) REFERENCES Branch(branchID)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ;
@@ -179,13 +180,13 @@ CREATE TABLE IF NOT EXISTS Log (
   bookingID    BIGINT UNSIGNED NULL,
   logAction       ENUM('Create','Update','Delete','CheckIn','CheckOut','Payment','Other') NOT NULL,
   logDescription  VARCHAR(255),
-  CONSTRAINT fk_branchID 
+  CONSTRAINT fk_branchID_log 
     FOREIGN KEY (branchID) REFERENCES Branch(branchID)
     ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT fk_userID 
+  CONSTRAINT fk_userID_log 
     FOREIGN KEY (userID) REFERENCES User_Account(userID)
     ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT fk_bookingID 
+  CONSTRAINT fk_bookingID_log 
     FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
     ON DELETE SET NULL ON UPDATE CASCADE
 ) ;
