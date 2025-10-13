@@ -1,20 +1,46 @@
-from datetime import date
-from ..database.connection import get_db_cursor
-from ..database.queries import BOOKING_QUERIES, ROOM_QUERIES
+from datetime import date, datetime
+from ..database.queries import call_proc
+from typing import List, Dict, Optional
 
-def is_room_available(room_id: int, check_in: date, check_out: date) -> bool:
-    # Query any available rooms in range and check membership
-    with get_db_cursor() as (conn, cur):
-        cur.execute(ROOM_QUERIES["available_in_range"], (check_in, check_out))
-        ids = {r["room_id"] for r in cur.fetchall()}
-        return room_id in ids
+def get_available_rooms(branch_id: int, check_in: datetime, check_out: datetime) -> List[Dict]:
+    """Get available rooms for given date range using stored procedure."""
+    result = call_proc("sp_get_available_rooms", (branch_id, check_in, check_out))
+    return result if result else []
 
-def create_booking(guest_id: int, room_id: int, check_in: date, check_out: date) -> int:
-    with get_db_cursor() as (conn, cur):
-        cur.execute(BOOKING_QUERIES["create"], (guest_id, room_id, check_in, check_out))
-        return cur.lastrowid
+def create_booking(guest_id: int, branch_id: int, room_id: int, 
+                  check_in: datetime, check_out: datetime, num_guests: int) -> int:
+    """Create a new booking using stored procedure."""
+    result = call_proc("sp_create_booking", 
+                      (guest_id, branch_id, room_id, check_in, check_out, num_guests))
+    if result and len(result) > 0:
+        return result[0]["bookingID"]
+    raise Exception("Failed to create booking")
 
-def get_booking(booking_id: int) -> dict | None:
-    with get_db_cursor() as (conn, cur):
-        cur.execute(BOOKING_QUERIES["get"], (booking_id,))
-        return cur.fetchone()
+def checkin_guest(booking_id: int) -> Dict:
+    """Check in a guest using stored procedure."""
+    result = call_proc("sp_checkin", (booking_id,))
+    if result and len(result) > 0:
+        return result[0]
+    raise Exception("Check-in failed")
+
+def checkout_guest(booking_id: int) -> Dict:
+    """Check out a guest using stored procedure."""
+    result = call_proc("sp_checkout", (booking_id,))
+    if result and len(result) > 0:
+        return result[0]
+    raise Exception("Check-out failed")
+
+def create_guest(first_name: str, last_name: str, phone: str, 
+                email: str, id_number: str) -> int:
+    """Create a new guest using stored procedure."""
+    result = call_proc("sp_create_guest", (first_name, last_name, phone, email, id_number))
+    if result and len(result) > 0:
+        return result[0]["guestID"]
+    raise Exception("Failed to create guest")
+
+def get_guest(guest_id: int) -> Optional[Dict]:
+    """Get guest information using stored procedure."""
+    result = call_proc("sp_get_guest_by_id", (guest_id,))
+    if result and len(result) > 0:
+        return result[0]
+    return None

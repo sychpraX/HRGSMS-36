@@ -13,5 +13,5 @@ CREATE FUNCTION fn_has_role(p_userID BIGINT UNSIGNED, p_role VARCHAR(20))
 RETURNS TINYINT(1)
 DETERMINISTIC
 RETURN EXISTS (
-  SELECT 1 FROM Users WHERE userID = p_userID AND userRole = p_role
+  SELECT 1 FROM User_Account WHERE userID = p_userID AND userRole = p_role
 ) $$
