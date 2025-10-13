@@ -1,22 +1,31 @@
 from typing import Optional
-from ..database.connection import get_db_cursor, DBError
-from ..database.queries import USER_QUERIES
-from ..utils.security import verify_password, hash_password, create_access_token
+from ..database.queries import call_proc
+from ..utils.security import create_access_token
 
-def authenticate(email: str, password: str) -> Optional[dict]:
-    with get_db_cursor() as (conn, cur):
-        cur.execute(USER_QUERIES["get_by_email"], (email,))
-        row = cur.fetchone()
-        if not row or not verify_password(password, row["password_hash"]):
-            return None
-        return {"user_id": row["user_id"], "email": row["email"], "role": row["role"]}
+def authenticate(username: str, password: str) -> Optional[dict]:
+    """Authenticate user using stored procedure."""
+    try:
+        result = call_proc("sp_login", (username, password))
+        if result and len(result) > 0:
+            row = result[0]
+            if row.get("success") == 1:
+                return {
+                    "user_id": row["userID"], 
+                    "username": row["username"], 
+                    "role": row["userRole"]
+                }
+        return None
+    except Exception:
+        return None
 
-def register(email: str, password: str, role: str) -> int:
-    pw_hash = hash_password(password)
-    with get_db_cursor() as (conn, cur):
-        cur.execute(USER_QUERIES["create"], (email, pw_hash, role))
-        return cur.lastrowid
+def register(username: str, password: str, role: str) -> int:
+    """Register new user using stored procedure."""
+    result = call_proc("sp_create_user", (username, password, role))
+    if result and len(result) > 0:
+        return result[0]["userID"]
+    raise Exception("Failed to create user")
 
 def issue_token(user: dict) -> str:
-    sub = {"user_id": user["user_id"], "email": user["email"], "role": user["role"]}
+    """Issue JWT token for authenticated user."""
+    sub = {"user_id": user["user_id"], "username": user["username"], "role": user["role"]}
     return create_access_token(sub)

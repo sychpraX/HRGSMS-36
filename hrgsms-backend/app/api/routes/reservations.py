@@ -1,14 +1,42 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from ...api.dependencies import require_roles
+from datetime import datetime
+from ...api.dependancies import require_roles
 from ...models.schemas import ReservationCreate, ReservationOut
-from ...services.booking_service import is_room_available, create_booking, get_booking
+from ...services.booking_service import create_booking, checkin_guest, checkout_guest, create_guest
 
-router = APIRouter()
+router = APIRouter(prefix="/reservations", tags=["reservations"])
 
-@router.post("/", response_model=ReservationOut, status_code=201)
-def create_reservation(payload: ReservationCreate, user=Depends(require_roles("Admin", "Manager", "FrontDesk"))):
-    if not is_room_available(payload.room_id, payload.check_in_date, payload.check_out_date):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Room is not available in the given range")
-    booking_id = create_booking(payload.guest_id, payload.room_id, payload.check_in_date, payload.check_out_date)
-    row = get_booking(booking_id)
-    return row
+@router.post("/", status_code=201)
+def create_reservation(payload: ReservationCreate, user=Depends(require_roles("Admin", "Manager", "Reception"))):
+    try:
+        # Convert dates to datetime for the stored procedure
+        check_in_dt = datetime.combine(payload.check_in_date, datetime.min.time())
+        check_out_dt = datetime.combine(payload.check_out_date, datetime.min.time())
+        
+        booking_id = create_booking(
+            payload.guest_id, 
+            payload.branch_id,  # This should be in the payload
+            payload.room_id, 
+            check_in_dt, 
+            check_out_dt, 
+            payload.num_guests
+        )
+        return {"booking_id": booking_id, "message": "Reservation created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@router.post("/{booking_id}/checkin")
+def checkin(booking_id: int, user=Depends(require_roles("Admin", "Manager", "Reception"))):
+    try:
+        result = checkin_guest(booking_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@router.post("/{booking_id}/checkout")
+def checkout(booking_id: int, user=Depends(require_roles("Admin", "Manager", "Reception"))):
+    try:
+        result = checkout_guest(booking_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
