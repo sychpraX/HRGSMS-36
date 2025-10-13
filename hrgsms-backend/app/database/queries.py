@@ -1,34 +1,18 @@
-# Group related raw SQL queries here. Always parameterize with %s.
+from .connection import get_db_cursor
 
-USER_QUERIES = {
-    "get_by_email": """SELECT user_id, email, password_hash, role FROM User WHERE email = %s LIMIT 1;""",
-    "create": """INSERT INTO User (email, password_hash, role, created_at) VALUES (%s, %s, %s, NOW());""",
-}
+class DBError(Exception): ...
 
-ROOM_QUERIES = {
-    "all": """
-        SELECT r.room_id, r.room_number, rt.type_name, rt.base_rate, r.status, b.branch_name
-        FROM Room r
-        JOIN RoomType rt ON r.room_type_id = rt.room_type_id
-        JOIN Branch b ON r.branch_id = b.branch_id
-        ORDER BY r.room_number;
-    """,
-    "available_in_range": """
-        SELECT r.room_id, r.room_number
-        FROM Room r
-        WHERE r.status = 'Available' AND r.room_id NOT IN (
-            SELECT room_id FROM Booking
-            WHERE NOT (check_out_date <= %s OR check_in_date >= %s)
-        );
-    """
-}
-
-BOOKING_QUERIES = {
-    "create": """
-        INSERT INTO Booking (guest_id, room_id, check_in_date, check_out_date, status, created_at)
-        VALUES (%s, %s, %s, %s, 'Booked', NOW());
-    """,
-    "get": """
-        SELECT * FROM Booking WHERE booking_id = %s;
-    """
-}
+def call_proc(proc_name: str, args: tuple = ()):
+    with get_db_cursor() as (conn, cur):
+        try:
+            cur.callproc(proc_name, args)
+            # collect first resultset if any
+            for rs in cur.stored_results():
+                rows = rs.fetchall()
+                conn.commit()
+                return rows
+            conn.commit()
+            return None
+        except Exception as e:
+            conn.rollback()
+            raise DBError(f"{proc_name} failed: {e}") from e
