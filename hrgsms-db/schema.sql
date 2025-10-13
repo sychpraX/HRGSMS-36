@@ -193,8 +193,15 @@ CREATE TABLE IF NOT EXISTS Log (
 
 
 
-
-
+ALTER TABLE User_Account
+ADD COLUMN salt VARBINARY(16),
+DROP COLUMN userPassword,
+ADD COLUMN password_hash VARBINARY(255);
+DROP first_name,
+DROP last_name,
+DROP NIC,
+DROP phone,
+DROP email;
 
 
 

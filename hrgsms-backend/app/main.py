@@ -1,11 +1,5 @@
 from fastapi import FastAPI
-from app.routers import items
+from app.api.routes import auth_routes
 
-app = FastAPI(title="My Structured FastAPI App", version="1.0.0")
-
-# Include Routers
-app.include_router(items.router)
-
-@app.get("/")
-def root():
-    return {"message": "Hello, Structured FastAPI!"}
+app = FastAPI(title="HRGSMS API")
+app.include_router(auth_routes.router)
