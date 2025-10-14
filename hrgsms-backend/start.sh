@@ -7,12 +7,19 @@ echo "Starting HRGSMS Backend..."
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv venv
+    python -m venv venv
 fi
 
-# Activate virtual environment
+# Activate virtual environment (cross-platform)
 echo "Activating virtual environment..."
-source venv/bin/activate
+if [ -f "venv/Scripts/activate" ]; then
+    source venv/Scripts/activate
+elif [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+else
+    echo "Could not find the virtual environment activation script."
+    exit 1
+fi
 
 # Install dependencies
 echo "Installing dependencies..."
@@ -20,4 +27,4 @@ pip install -r requirements.txt
 
 # Start the application
 echo "Starting FastAPI server..."
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
