@@ -320,6 +320,8 @@ BEGIN
 END $$
 
 -- Reporting Procedures
+
+-- Revenue report (When start date, end date and the branch is given)
 DROP PROCEDURE IF EXISTS sp_get_revenue_report $$
 CREATE PROCEDURE sp_get_revenue_report(
   IN p_branchID BIGINT UNSIGNED,
@@ -340,5 +342,90 @@ BEGIN
   ORDER BY DATE(b.checkInDate);
 END $$
 
-DELIMITER ;
+-- Room occupancy report(when date period is given)
+DROP PROCEDURE IF EXISTS sp_get_room_occupancy_report $$
+CREATE PROCEDURE sp_get_room_occupancy_report(
+  IN p_startDate DATE,
+  IN p_endDate DATE
+)
+BEGIN
+  SELECT 
+    b.branchLocation,
+    r.roomNo,
+    CASE 
+      WHEN EXISTS (
+        SELECT 1 FROM Booking bk
+        WHERE bk.roomID = r.roomID
+          AND bk.checkInDate < p_endDate
+          AND bk.checkOutDate > p_startDate
+          AND bk.bookingStatus IN ('Booked','CheckedIn')
+      )
+      THEN 'Unavailable'
+      ELSE 'Available'
+    END AS availability
+  FROM Branch b
+  INNER JOIN Room r ON b.branchID = r.branchID
+  ORDER BY b.branchLocation, r.roomNo;
+END $$
+
+-- Guest billing summary
+DROP PROCEDURE IF EXISTS sp_get_guest_billing_summary $$
+CREATE PROCEDURE sp_get_guest_billing_summary()
+  BEGIN
+    SELECT i.invoiceID, g.firstName as guestName
+    (i.roomCharges+i.serviceCharges+i.taxAmount +l.amount-i.discountAmount-i.settledAmount) as unpaid_amount
+    FROM Invoice i
+    INNER JOIN Booking b on i.bookingID = b.bookingID
+    INNER JOIN Guest g on g.guestID = b.bookingID
+    INNER JOIN Late_Checkout l on i.latePolicyID = l.latePolicyID
+    WHERE (i.roomCharges + i.serviceCharges + i.taxAmount + l.amount- i.discountAmount - i.settledAmount) > 0
+    ORDER BY guestName, i.invoiceID;
+  END $$
+
+  -- Service breakdown per room
+DROP PROCEDURE IF EXISTS sp_get_service_usage_per_room $$
+CREATE PROCEDURE sp_get_service_usage_per_room()
+BEGIN
+  SELECT
+    b.branchLocation,
+    r.roomNo,
+    cs.serviceType,
+    SUM(su.quantity) AS total_quantity,
+    SUM(su.rate * su.quantity) AS total_amount
+  FROM Service_Usage su
+  INNER JOIN Room r ON su.bookingID IN (
+    SELECT bookingID FROM Booking WHERE roomID = r.roomID
+  )
+  INNER JOIN Branch b ON r.branchID = b.branchID
+  INNER JOIN Chargeble_Service cs ON su.serviceID = cs.serviceID
+  GROUP BY b.branchLocation, r.roomNo, cs.serviceType
+  ORDER BY b.branchLocation, r.roomNo, cs.serviceType;
+END $$
+
+
+DROP PROCEDURE IF EXISTS sp_generate_bill $$
+CREATE PROCEDURE sp_generate_bill(IN p_bookingID BIGINT UNSIGNED)
+BEGIN
+  DECLARE v_roomCharges DECIMAL(15,2) DEFAULT 0.00;
+  DECLARE v_serviceCharges DECIMAL(15,2) DEFAULT 0.00;
+  DECLARE v_total DECIMAL(15,2) DEFAULT 0.00;
+
+  -- Get room charges from Invoice
+  SELECT IFNULL(roomCharges,0) INTO v_roomCharges
+  FROM Invoice
+  WHERE bookingID = p_bookingID;
+
+  -- Calculate total service charges for this booking
+  SELECT IFNULL(SUM(rate * quantity),0) INTO v_serviceCharges
+  FROM Service_Usage
+  WHERE bookingID = p_bookingID;
+
+  SET v_total = v_roomCharges + v_serviceCharges - ;
+
+  SELECT v_roomCharges AS roomCharges,
+         v_serviceCharges AS serviceCharges,
+         v_total AS totalBill;
+END $$
+
+
 
