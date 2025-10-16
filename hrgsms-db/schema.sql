@@ -1,204 +1,176 @@
-USE hrgsms_db;
+CREATE TABLE `booking` (
+  `bookingID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `guestID` bigint unsigned NOT NULL,
+  `branchID` bigint unsigned NOT NULL,
+  `roomID` bigint unsigned NOT NULL,
+  `rate` decimal(10,2) unsigned NOT NULL,
+  `checkInDate` datetime NOT NULL,
+  `checkOutDate` datetime NOT NULL,
+  `numGuests` int unsigned NOT NULL,
+  `bookingStatus` enum('Booked','CheckedIn','CheckedOut','Cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Booked',
+  PRIMARY KEY (`bookingID`),
+  KEY `fk_guestID` (`guestID`),
+  KEY `fk_branchID_booking` (`branchID`),
+  KEY `fk_roomID_booking` (`roomID`),
+  CONSTRAINT `fk_branchID_booking` FOREIGN KEY (`branchID`) REFERENCES `branch` (`branchID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_guestID` FOREIGN KEY (`guestID`) REFERENCES `guest` (`guestID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_roomID_booking` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `chk_date` CHECK ((`checkInDate` <= `checkOutDate`))
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Branch (
-	branchID BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  branchLocation VARCHAR(20) NOT NULL,
-	rating NUMERIC(2,1),
-  phone char(12) NOT NULL,
-  email varchar(30) NOT NULL,
-  CONSTRAINT chk_phone CHECK(
-	phone like '+94%'),
-	CONSTRAINT chk_rating CHECK(
-	rating >=0 AND rating <= 5)
-);
+CREATE TABLE `branch` (
+  `branchID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `location` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `rating` decimal(2,1) DEFAULT NULL,
+  `phone` char(12) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`branchID`),
+  CONSTRAINT `chk_phone` CHECK ((`phone` like _utf8mb4'+94%')),
+  CONSTRAINT `chk_rating` CHECK (((`rating` >= 0) and (`rating` <= 5)))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Room_Type (
-	typeID	INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	typeName VARCHAR(20) NOT NULL,
-	capacity INT NOT NULL,
-	currRate NUMERIC(10,2) NOT NULL
-);
-    
-CREATE TABLE IF NOT EXISTS Room (
-	roomID BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	branchID BIGINT UNSIGNED NOT NULL,
-	typeID	INT UNSIGNED NOT NULL,
-	roomNo	INT UNSIGNED NOT NULL,
-	roomStatus	ENUM('Occupied', 'Available') NOT NULL,
-  CONSTRAINT fk_branchID 
-    FOREIGN KEY (branchID) REFERENCES Branch(branchID) 
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_typeID 
-    FOREIGN KEY (typeID) REFERENCES Room_Type(typeID)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  UNIQUE KEY uq_branch_roomNo (branchID, roomNo), 
-  CONSTRAINT chk_roomNo CHECK(roomNo>0)
-);
+CREATE TABLE `chargeble_service` (
+  `serviceID` int unsigned NOT NULL AUTO_INCREMENT,
+  `unit` enum('per person','per kg','per item','per request') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ratePerUnit` decimal(10,2) unsigned NOT NULL,
+  `serviceType` enum('Spa','Pool','Room Service','Minibar','Laundry','Airport Shuttle') COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`serviceID`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `discount` (
+  `discountCode` int unsigned NOT NULL AUTO_INCREMENT,
+  `discountName` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `discountCondition` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `validFrom` date NOT NULL,
+  `validTo` date NOT NULL,
+  `discountValue` decimal(6,2) unsigned NOT NULL,
+  PRIMARY KEY (`discountCode`),
+  CONSTRAINT `chk_dateValidity` CHECK ((`validTo` > `validFrom`))
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Guest (
-  guestID     BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  firstName   VARCHAR(50) NOT NULL,
-  lastName    VARCHAR(50) NOT NULL,
-  phone       VARCHAR(20) NOT NULL,
-  email       VARCHAR(100),
-  idNumber    VARCHAR(30) UNIQUE NOT NULL,
-  CONSTRAINT chk_phone_guest CHECK(
-	phone like '+94%')      
-);
+CREATE TABLE `guest` (
+  `guestID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `firstName` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `lastName` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `idNumber` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`guestID`),
+  UNIQUE KEY `idNumber` (`idNumber`),
+  CONSTRAINT `chk_phone_guest` CHECK ((`phone` like _utf8mb4'+94%'))
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Booking (
-  bookingID     BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  guestID       BIGINT UNSIGNED NOT NULL,
-  branchID      BIGINT UNSIGNED NOT NULL,
-  roomID        BIGINT UNSIGNED NOT NULL,
-  rate          NUMERIC(10,2) UNSIGNED NOT NULL, -- Snapshot of the rate at the time of booking
-  checkInDate   DATETIME NOT NULL,
-  checkOutDate  DATETIME NOT NULL,
-  numGuests     INT UNSIGNED NOT NULL,
-  bookingStatus ENUM('Booked','CheckedIn','CheckedOut','Cancelled') NOT NULL DEFAULT 'Booked',
-  CONSTRAINT fk_guestID 
-    FOREIGN KEY (guestID) REFERENCES Guest(guestID)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_branchID_booking 
-    FOREIGN KEY (branchID) REFERENCES Branch(branchID)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_roomID_booking 
-    FOREIGN KEY (roomID) REFERENCES Room(roomID)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT chk_date CHECK(checkInDate<=checkOutDate)
-);
+CREATE TABLE `invoice` (
+  `invoiceID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `bookingID` bigint unsigned NOT NULL,
+  `policyID` int unsigned DEFAULT NULL,
+  `discountCode` int unsigned DEFAULT NULL,
+  `paymentPlan` enum('Full','Installment') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Full',
+  `roomCharges` decimal(15,2) unsigned NOT NULL DEFAULT '0.00',
+  `serviceCharges` decimal(15,2) unsigned NOT NULL DEFAULT '0.00',
+  `discountAmount` decimal(10,2) unsigned NOT NULL DEFAULT '0.00',
+  `settledAmount` decimal(15,2) unsigned NOT NULL DEFAULT '0.00',
+  `invoiceStatus` enum('Pending','Partially Paid','Paid','Cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Pending',
+  `taxAmount` decimal(10,2) unsigned NOT NULL DEFAULT '0.00',
+  `latePolicyID` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`invoiceID`),
+  UNIQUE KEY `bookingID` (`bookingID`),
+  KEY `fk_policyID` (`policyID`),
+  KEY `fk_discountCode` (`discountCode`),
+  KEY `latePolicyID` (`latePolicyID`),
+  CONSTRAINT `fk_bookingID_invoice` FOREIGN KEY (`bookingID`) REFERENCES `booking` (`bookingID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_discountCode` FOREIGN KEY (`discountCode`) REFERENCES `discount` (`discountCode`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_policyID` FOREIGN KEY (`policyID`) REFERENCES `tax_policy` (`policyID`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `invoice_ibfk_1` FOREIGN KEY (`latePolicyID`) REFERENCES `late_checkout_policy` (`latePolicyID`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Chargeble_Service (
-  serviceID   INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  serviceType ENUM( 'Spa services', 'Pool access', 'room service', 'laundry', 'minibar usage') NOT NULL, 
-  unit ENUM('per person','per kg', 'per item', 'per request'), 
-  ratePerUnit  DECIMAL(10,2) UNSIGNED NOT NULL
-);
+CREATE TABLE `late_checkout_policy` (
+  `latePolicyID` int unsigned NOT NULL,
+  `amount` decimal(10,2) unsigned DEFAULT NULL,
+  PRIMARY KEY (`latePolicyID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Service_Usage ( 
-  usageID	BIGINT UNSIGNED PRIMARY KEY NOT NULL,
-  bookingID  BIGINT UNSIGNED NOT NULL,
-  serviceID  INT UNSIGNED NOT NULL,
-  rate  DECIMAL(10,2) UNSIGNED NOT NULL,     -- Snapshot of the rate at the time of service usage
-  quantity   INT UNSIGNED NOT NULL DEFAULT 1,
-  usedAt	TIMESTAMP NOT NULL,
-  CONSTRAINT fk_bookingID_service 
-    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_serviceID 
-    FOREIGN KEY (serviceID) REFERENCES Chargeble_Service(serviceID)
-    ON DELETE RESTRICT ON UPDATE CASCADE
-);
+CREATE TABLE `log` (
+  `logID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `event_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `branchID` bigint unsigned DEFAULT NULL,
+  `userID` int unsigned DEFAULT NULL,
+  `bookingID` bigint unsigned DEFAULT NULL,
+  `logAction` enum('Create','Update','Delete','CheckIn','CheckOut','Payment','Other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `logDescription` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`logID`),
+  KEY `fk_branchID_log` (`branchID`),
+  KEY `fk_userID_log` (`userID`),
+  KEY `fk_bookingID_log` (`bookingID`),
+  CONSTRAINT `fk_bookingID_log` FOREIGN KEY (`bookingID`) REFERENCES `booking` (`bookingID`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_branchID_log` FOREIGN KEY (`branchID`) REFERENCES `branch` (`branchID`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_userID_log` FOREIGN KEY (`userID`) REFERENCES `user_account` (`userID`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Late_Checkout_policy (
-	latePolicyID INT UNSIGNED PRIMARY KEY NOT NULL,
-	amount NUMERIC(10,2) UNSIGNED,
-);
+CREATE TABLE `payment` (
+  `transactionID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoiceID` bigint unsigned NOT NULL,
+  `transactionDate` date NOT NULL,
+  `paymentMethod` enum('Cash','Card','Online','Other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(15,2) unsigned NOT NULL,
+  PRIMARY KEY (`transactionID`),
+  KEY `fk_invoiceID` (`invoiceID`),
+  CONSTRAINT `fk_invoiceID` FOREIGN KEY (`invoiceID`) REFERENCES `invoice` (`invoiceID`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Tax_Policy (
-  policyID   INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  rate       DECIMAL(5,4) UNSIGNED NOT NULL,       
-  appliesTo  VARCHAR(20) NOT NULL,        
-  policyName       VARCHAR(100) NOT NULL        
-);
+CREATE TABLE `room` (
+  `roomID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `branchID` bigint unsigned NOT NULL,
+  `typeID` int unsigned NOT NULL,
+  `roomNo` int unsigned NOT NULL,
+  `roomStatus` enum('Occupied','Available') COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`roomID`),
+  UNIQUE KEY `uq_branch_roomNo` (`branchID`,`roomNo`),
+  KEY `fk_typeID` (`typeID`),
+  CONSTRAINT `fk_branchID` FOREIGN KEY (`branchID`) REFERENCES `branch` (`branchID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_typeID` FOREIGN KEY (`typeID`) REFERENCES `room_type` (`typeID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `chk_roomNo` CHECK ((`roomNo` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Discount (
-  discountCode  INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  discountName  VARCHAR(100) NOT NULL,            
-  discountCondition     VARCHAR(200),                     
-  discountValue   DECIMAL(5,2) UNSIGNED NOT NULL,            
-  validFrom     DATE NOT NULL,
-  validTo       DATE NOT NULL,
-  CONSTRAINT chk_dateValidity CHECK(validTo>validFrom)
-) ;
+CREATE TABLE `room_type` (
+  `typeID` int unsigned NOT NULL AUTO_INCREMENT,
+  `typeName` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `capacity` int NOT NULL,
+  `currRate` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`typeID`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Invoice (
-  invoiceID       BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  bookingID       BIGINT UNSIGNED NOT NULL UNIQUE,
-  latePolicyID    INT UNSIGNED NULL,
-  policyID        INT UNSIGNED NULL,         
-  discountCode    INT UNSIGNED NULL,         
-  paymentPlan     ENUM('Full','Installment') NOT NULL DEFAULT 'Full',
-  roomCharges     DECIMAL(15,2) UNSIGNED NOT NULL DEFAULT 0.00,    -- Must be saved becasue the rates can change daily but once offered rates cannot change
-  serviceCharges  DECIMAL(15,2) UNSIGNED NOT Null DEFAULT 0.00,
-  discountAmount  DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0.00,
-  settledAmount   DECIMAL(15,2) UNSIGNED NOT NULL DEFAULT 0.00,   
-  invoiceStatus   ENUM('Pending','Partially Paid','Paid','Cancelled') NOT NULL DEFAULT 'Pending',
-  CONSTRAINT fk_bookingID_invoice
-    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_policyID
-    FOREIGN KEY (policyID) REFERENCES Tax_Policy(policyID)
-    ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT fk_discountCode 
-    FOREIGN KEY (discountCode) REFERENCES Discount(discountCode)
-    ON DELETE SET NULL ON UPDATE CASCADE
-);
+CREATE TABLE `service_usage` (
+  `usageID` bigint unsigned NOT NULL,
+  `bookingID` bigint unsigned NOT NULL,
+  `serviceID` int unsigned NOT NULL,
+  `rate` decimal(10,2) unsigned NOT NULL,
+  `quantity` int unsigned NOT NULL DEFAULT '1',
+  `usedAt` timestamp NOT NULL,
+  PRIMARY KEY (`usageID`),
+  KEY `fk_bookingID_service` (`bookingID`),
+  KEY `fk_serviceID` (`serviceID`),
+  CONSTRAINT `fk_bookingID_service` FOREIGN KEY (`bookingID`) REFERENCES `booking` (`bookingID`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_serviceID` FOREIGN KEY (`serviceID`) REFERENCES `chargeble_service` (`serviceID`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-ALTER TABLE Invoice
-ADD COLUMN taxAmount DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0.00,
-ADD CONSTRAINT chk_paidAmount CHECK(settledAmount<=(roomCharges+serviceCharges+taxAmount-discountAmount));
+CREATE TABLE `tax_policy` (
+  `policyID` int unsigned NOT NULL AUTO_INCREMENT,
+  `rate` decimal(5,4) unsigned NOT NULL,
+  `appliesTo` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `policyName` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`policyID`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS Payment (
-  transactionID   BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  invoiceID       BIGINT UNSIGNED NOT NULL,
-  transactionDate DATE NOT NULL,
-  paymentMethod   ENUM('Cash','Card','Online','Other') NOT NULL,
-  amount          DECIMAL(15,2) UNSIGNED NOT NULL,
-  CONSTRAINT fk_invoiceID 
-    FOREIGN KEY (invoiceID) REFERENCES Invoice(invoiceID)
-    ON DELETE RESTRICT ON UPDATE CASCADE
-) ;
-
-
-CREATE TABLE IF NOT EXISTS User_Account (
-  userID      INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  branchID    BIGINT UNSIGNED NULL,
-  username    VARCHAR(100) NOT NULL UNIQUE,
-  userPassword    VARCHAR(255) NOT NULL,             
-  userRole        ENUM('Admin','Manager','Reception','Staff') NOT NULL,
-  NIC         VARCHAR(20) UNIQUE,
-  first_name  VARCHAR(20) NOT NULL,
-  last_name   VARCHAR(20) NOT NULL,
-  phone       VARCHAR(15),
-  email       VARCHAR(30) UNIQUE,
-  CONSTRAINT fk_branchID_user
-    FOREIGN KEY (branchID) REFERENCES Branch(branchID)
-    ON DELETE RESTRICT ON UPDATE CASCADE
-) ;
-
-CREATE TABLE IF NOT EXISTS Log (
-  logID        BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  event_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  branchID     BIGINT UNSIGNED NULL,
-  userID       INT UNSIGNED NULL,
-  bookingID    BIGINT UNSIGNED NULL,
-  logAction       ENUM('Create','Update','Delete','CheckIn','CheckOut','Payment','Other') NOT NULL,
-  logDescription  VARCHAR(255),
-  CONSTRAINT fk_branchID_log 
-    FOREIGN KEY (branchID) REFERENCES Branch(branchID)
-    ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT fk_userID_log 
-    FOREIGN KEY (userID) REFERENCES User_Account(userID)
-    ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT fk_bookingID_log 
-    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID)
-    ON DELETE SET NULL ON UPDATE CASCADE
-) ;
-
-
-
-ALTER TABLE User_Account
-ADD COLUMN salt VARBINARY(16),
-DROP COLUMN userPassword,
-ADD COLUMN password_hash VARBINARY(255);
-DROP first_name,
-DROP last_name,
-DROP NIC,
-DROP phone,
-DROP email;
-
-
-
-
+CREATE TABLE `user_account` (
+  `userID` int unsigned NOT NULL AUTO_INCREMENT,
+  `branchID` bigint unsigned DEFAULT NULL,
+  `username` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `userRole` enum('Admin','Manager','Reception','Staff') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `salt` varbinary(16) DEFAULT NULL,
+  `password_hash` varbinary(255) DEFAULT NULL,
+  PRIMARY KEY (`userID`),
+  UNIQUE KEY `username` (`username`),
+  KEY `fk_branchID_user` (`branchID`),
+  CONSTRAINT `fk_branchID_user` FOREIGN KEY (`branchID`) REFERENCES `branch` (`branchID`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
