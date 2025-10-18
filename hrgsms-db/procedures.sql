@@ -2,12 +2,23 @@ DELIMITER $$
 CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_add_payment`(
   IN p_invoiceID BIGINT UNSIGNED,
   IN p_amount DECIMAL(15,2),
-  IN p_paymentMethod ENUM('Cash','Card','Online','Other')
+  IN p_paymentMethod VARCHAR(20)
 )
 BEGIN
   DECLARE v_currentSettled DECIMAL(15,2);
   DECLARE v_totalDue DECIMAL(15,2);
   
+  
+  -- Error handler for rollback on exception
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Payment transaction failed — rolled back';
+  END;
+  
+  START TRANSACTION;
+
   -- Get current settled amount and calculate total due
   SELECT 
     i.settledAmount,
@@ -15,7 +26,7 @@ BEGIN
   INTO v_currentSettled, v_totalDue
   FROM Invoice i
   WHERE i.invoiceID = p_invoiceID;
-  
+
   -- Check if payment amount is valid
   IF (v_currentSettled + p_amount) > v_totalDue THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Payment amount exceeds due amount';
@@ -34,10 +45,13 @@ BEGIN
         ELSE 'Partially Paid'
       END
   WHERE invoiceID = p_invoiceID;
+
+  COMMIT;
   
   SELECT LAST_INSERT_ID() AS transactionID;
 END$$
 DELIMITER ;
+
 
 DELIMITER $$
 CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_add_service_usage`(
@@ -69,6 +83,8 @@ BEGIN
   SET bookingStatus = 'CheckedIn'
   WHERE bookingID = p_bookingID 
     AND bookingStatus = 'Booked';
+
+    -- A trigger is available to handle the invoice creation upon checking in
     
   IF ROW_COUNT() = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Booking not found or already checked in';
@@ -79,31 +95,136 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+
+CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_generate_final_invoice`(
+  IN p_bookingID BIGINT UNSIGNED,
+  IN p_policyID INT UNSIGNED,        -- optional tax policy
+  IN p_discountCode INT UNSIGNED,    -- optional discount
+  IN p_latePolicyID INT UNSIGNED     -- optional late checkout policy
+)
+BEGIN
+  DECLARE v_roomCharges DECIMAL(15,2) DEFAULT 0.00;
+  DECLARE v_serviceCharges DECIMAL(15,2) DEFAULT 0.00;
+  DECLARE v_taxAmount DECIMAL(10,2) DEFAULT 0.00;
+  DECLARE v_discountAmount DECIMAL(10,2) DEFAULT 0.00;
+  DECLARE v_lateAmount DECIMAL(10,2) DEFAULT 0.00;
+
+  --  Base room charge
+  SELECT rate * DATEDIFF(checkOutDate, checkInDate)
+    INTO v_roomCharges
+  FROM Booking
+  WHERE bookingID = p_bookingID;
+
+  -- Late checkout fee
+  IF p_latePolicyID IS NOT NULL THEN
+    SELECT fee INTO v_lateAmount
+    FROM Late_Checkout_Policy
+    WHERE policyID = p_latePolicyID;
+    SET v_roomCharges = v_roomCharges + v_lateAmount;
+  END IF;
+
+  --  Service charges
+  SELET COALESCE(SUM(rate * quantity), 0)
+    INTO v_serviceCharges
+  FROM Service_Usage
+  WHERE bookingID = p_bookingID;
+
+  --  Tax
+  IF p_policyID IS NOT NULL THEN
+    SELECT (v_roomCharges + v_serviceCharges + v_lateAmount) * rate
+      INTO v_taxAmount
+    FROM Tax_Policy
+    WHERE policyID = p_policyID;
+  END IF;
+
+  --  Discount
+  IF p_discountCode IS NOT NULL THEN
+    SELECT discountValue
+      INTO v_discountAmount
+    FROM Discount
+    WHERE discountCode = p_discountCode
+      AND CURDATE() BETWEEN validFrom AND validTo;
+  END IF;
+
+  --  Update or insert invoice
+  IF EXISTS (SELECT 1 FROM Invoice WHERE bookingID = p_bookingID) THEN
+    UPDATE Invoice
+    SET policyID       = p_policyID,
+        discountCode   = p_discountCode,
+        roomCharges    = v_roomCharges,
+        serviceCharges = v_serviceCharges,
+        taxAmount      = v_taxAmount,
+        discountAmount = v_discountAmount,
+        lateFee        = v_lateAmount
+    WHERE bookingID = p_bookingID;
+  ELSE
+    INSERT INTO Invoice (
+      bookingID, policyID, discountCode,
+      roomCharges, serviceCharges, taxAmount, discountAmount, lateFee
+    )
+    VALUES (
+      p_bookingID, p_policyID, p_discountCode,
+      v_roomCharges, v_serviceCharges, v_taxAmount, v_discountAmount, v_lateAmount
+    );
+  END IF;
+
+  --  Return calculated totals
+  SELECT
+    v_roomCharges    AS room_charges,
+    v_serviceCharges AS service_charges,
+    v_lateAmount     AS late_checkout_fee,
+    v_taxAmount      AS tax,
+    v_discountAmount AS discount;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
 CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_checkout`(
   IN p_bookingID BIGINT UNSIGNED
 )
+
 BEGIN
   DECLARE v_roomID BIGINT UNSIGNED;
-  
+
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Checkout failed — transaction rolled back';
+  END;
+
+  START TRANSACTION;
+
+  -- Validate booking and lock it
   SELECT roomID INTO v_roomID
   FROM Booking
-  WHERE bookingID = p_bookingID;
-  
-  UPDATE Booking 
-  SET bookingStatus = 'CheckedOut'
-  WHERE bookingID = p_bookingID 
-    AND bookingStatus = 'CheckedIn';
-    
-  IF ROW_COUNT() = 0 THEN
+  WHERE bookingID = p_bookingID AND bookingStatus = 'CheckedIn'
+  FOR UPDATE;
+
+  IF v_roomID IS NULL THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Booking not found or not checked in';
   END IF;
-  
-  -- Update room status
-  UPDATE Room SET roomStatus = 'Available' WHERE roomID = v_roomID;
-  
-  SELECT 'Check-out successful' AS message;
+
+  -- Mark booking as checked out
+  UPDATE Booking
+  SET bookingStatus = 'CheckedOut'
+  WHERE bookingID = p_bookingID;
+
+  -- Update room to available
+  UPDATE Room
+  SET roomStatus = 'Available'
+  WHERE roomID = v_roomID;
+
+  COMMIT;
+
+  --  Return summary
+  SELECT
+    'Checkout completed successfully' AS message,
 END$$
+
 DELIMITER ;
+
 
 DELIMITER $$
 CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_create_booking`(
@@ -117,6 +238,13 @@ CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_create_booking`(
 BEGIN
   DECLARE v_rate DECIMAL(10,2);
   DECLARE v_bookingID BIGINT UNSIGNED;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Booking transaction failed — rolled back';
+  END;
+  
+  START TRANSACTION;
   
   -- Get current rate for the room
   SELECT rt.currRate INTO v_rate
@@ -134,6 +262,7 @@ BEGIN
         (checkInDate < p_checkOutDate AND checkOutDate >= p_checkOutDate) OR
         (checkInDate >= p_checkInDate AND checkOutDate <= p_checkOutDate)
       )
+	FOR UPDATE
   ) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Room is not available for the selected dates';
   END IF;
@@ -145,10 +274,13 @@ BEGIN
   
   -- Update room status
   UPDATE Room SET roomStatus = 'Occupied' WHERE roomID = p_roomID;
+
+  -- A trigger is available to handle the invoice creation upon booking
+  
+  COMMIT;
   
   SELECT v_bookingID AS bookingID;
-END$$
-DELIMITER ;
+END
 
 DELIMITER $$
 CREATE DEFINER=`hrgsms_usr`@`127.0.0.1` PROCEDURE `sp_create_guest`(

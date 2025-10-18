@@ -27,11 +27,11 @@ class RegisterRequest(BaseModel):
 
 # --- Guests ---
 class GuestCreate(BaseModel):
-    firstName: str
-    lastName: str
+    first_name: str
+    last_name: str
     phone: str
     email: Optional[str] = None
-    idNumber: str
+    id_number: str
 
 class GuestOut(BaseModel):
     guestID: int
@@ -43,83 +43,48 @@ class GuestOut(BaseModel):
 
 # --- Rooms ---
 class RoomOut(BaseModel):
-    roomID: int
-    roomNo: int
-    typeName: str
+    room_id: int
+    room_no: int
+    type_name: str
     capacity: int
-    currRate: float
-    roomStatus: str
-    location: str
+    curr_rate: float
+    room_status: str
+    branch_location: str
 
 # --- Reservations ---
 class ReservationCreate(BaseModel):
-    guestID: int
-    branchID: int
-    roomID: int
-    checkInDate: date
-    checkOutDate: date
-    numGuests: int
+    guest_id: int
+    branch_id: int
+    room_id: int
+    check_in_date: date
+    check_out_date: date
+    num_guests: int
 
 class ReservationOut(BaseModel):
-    bookingID: int
-    guestID: int
-    branchID: int
-    roomID: int
-    checkInDate: datetime
-    checkOutDate: datetime
-    numGuests: int
-    bookingStatus: str
+    booking_id: int
+    guest_id: int
+    branch_id: int
+    room_id: int
+    check_in_date: datetime
+    check_out_date: datetime
+    num_guests: int
+    booking_status: str
 
 # --- Services ---
 class ServiceUsageCreate(BaseModel):
-    bookingID: int
-    serviceID: int
+    booking_id: int
+    service_id: int
     quantity: int = 1
 
 # --- Payments ---
 class InvoiceCreate(BaseModel):
-    bookingID: int
-    policyID: Optional[int] = None
-    discountCode: Optional[int] = None
+    booking_id: int
+    policy_id: Optional[int] = None
+    discount_code: Optional[int] = None
+    late_policy_id: Optional[int] = None
+
 
 class PaymentCreate(BaseModel):
-    invoiceID: int
+    invoice_id: int
     amount: float
-    paymentMethod: str
-
-# --- Reports ---
-class RoomOccupancyReport(BaseModel):
-    branchLocation: str
-    roomNo: int
-    availability: str
-
-class GuestBillingSummary(BaseModel):
-    invoiceID: int
-    guestName: str
-    unpaid_amount: float
-
-class ServiceUsageReport(BaseModel):
-    branchLocation: str
-    roomNo: int
-    serviceType: str
-    total_quantity: int
-    total_amount: float
-
-class BillGeneration(BaseModel):
-    roomCharges: float
-    serviceCharges: float
-    taxAmount: float
-    discountAmount: float
-    totalBill: float
-
-# --- Branches ---
-class BranchOut(BaseModel):
-    branchID: int
-    branchLocation: str
-
-# --- Services ---
-class ServiceOut(BaseModel):
-    serviceID: int
-    serviceType: str
-    unit: str
-    ratePerUnit: float
+    payment_method: str

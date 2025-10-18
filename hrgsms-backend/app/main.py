@@ -1,8 +1,27 @@
 # app/main.py
 from fastapi import FastAPI, HTTPException
 from .api.routes import auth, rooms, reservations, services, payments, reports, guests
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="HRGSMS API", version="1.0.0", description="Hotel Room and Guest Services Management System")
+
+
+# CORS configuration
+
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,           # ok if you ever use cookies
+    allow_methods=["*"],               # or list: ["GET","POST","PUT","DELETE","OPTIONS"]
+    allow_headers=["*"],               # make sure "content-type" & "authorization" are allowed
+)
+
+
 
 # Include all routers
 app.include_router(auth.router)

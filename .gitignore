@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+hrgsms-frontend/node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# next.js / build
+.next/
+out/
+dist/
+
+# env & misc
+.env
+.env.*
+.DS_Store
+coverage/
