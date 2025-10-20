@@ -1,4 +1,4 @@
-// File: C:\Users\tpn14\Documents\MyCode\HRGSMS-36\HRGSMS-36\hrgsms-frontend\app\services\page.tsx
+// File: D:\HRGSMS-36\hrgsms-frontend\app\services\page.tsx
 import * as entry from '../../../../app/services/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -1,15 +1,20 @@
 {
   "pages": {
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/page": [
+    "/not-found": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/not-found.js"
     ],
     "/dashboard/page": [
       "static/chunks/webpack.js",
@@ -21,55 +26,50 @@
       "static/chunks/main-app.js",
       "static/chunks/app/login/page.js"
     ],
+    "/reports/serviceUsage/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/reports/serviceUsage/page.js"
+    ],
     "/reports/guestBilling/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/reports/guestBilling/page.js"
     ],
-    "/reports/serviceUsage/page": [
+    "/reports/roomOccupancy/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/reports/serviceUsage/page.js"
+      "static/chunks/app/reports/roomOccupancy/page.js"
     ],
     "/reports/revenue/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/reports/revenue/page.js"
     ],
-    "/not-found": [
+    "/payments/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
-    ],
-    "/guests/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/guests/page.js"
-    ],
-    "/reservations/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/reservations/page.js"
+      "static/chunks/app/payments/page.js"
     ],
     "/services/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/services/page.js"
     ],
-    "/payments/page": [
+    "/reservations/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/payments/page.js"
+      "static/chunks/app/reservations/page.js"
     ],
     "/rooms/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/rooms/page.js"
     ],
-    "/reports/roomOccupancy/page": [
+    "/guests/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/reports/roomOccupancy/page.js"
+      "static/chunks/app/guests/page.js"
     ]
   }
 }

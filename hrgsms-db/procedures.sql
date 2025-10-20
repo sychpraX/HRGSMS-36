@@ -366,9 +366,9 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Username already exists';
     END IF;
 
-    IF p_role NOT IN ('Admin','Manager','Reception','Staff') THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid role';
-    END IF;
+  IF p_role NOT IN ('Admin','Manager','Reception','Staff','Guest') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid role';
+  END IF;
 
     SET @salt := RANDOM_BYTES(16);
     SET @hash := fn_password_hash(@salt, p_plain);
