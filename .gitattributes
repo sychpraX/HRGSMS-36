@@ -1,0 +1,8 @@
+# Treat Next build output as binary or generated so git won't normalize line endings
+/hrgsms-frontend/.next/** binary
+
+# Specifically mark the trace file as binary to avoid LF->CRLF warnings
+/hrgsms-frontend/.next/trace -text
+
+# Ensure text files use native line endings where appropriate
+* text=auto

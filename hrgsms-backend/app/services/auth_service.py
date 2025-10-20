@@ -1,6 +1,9 @@
 from typing import Optional
+import logging
 from ..database.queries import call_proc
 from ..utils.security import create_access_token
+
+logger = logging.getLogger(__name__)
 
 def authenticate(username: str, password: str) -> Optional[dict]:
     """Authenticate user using stored procedure."""
@@ -16,6 +19,8 @@ def authenticate(username: str, password: str) -> Optional[dict]:
                 }
         return None
     except Exception:
+        # Log the exception to help debugging the authentication flow
+        logger.exception("Authentication failed for user %s", username)
         return None
 
 def register(username: str, password: str, role: str) -> int:
