@@ -18,6 +18,18 @@ def create_guest_endpoint(
     user=Depends(require_roles("Admin", "Manager", "Reception"))
 ):
     """Create a new guest."""
+    # Server-side validation
+    if not str(payload.phone).isdigit():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone must contain digits only")
+    if len(str(payload.phone)) != 10:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone must be exactly 10 digits")
+    if not str(payload.id_number).isdigit():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ID Number must contain digits only")
+    # simple email check
+    import re
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", payload.email or ""):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
+
     try:
         guest_id = create_guest(
             payload.first_name, 

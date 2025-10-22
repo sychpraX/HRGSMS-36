@@ -1,8 +1,21 @@
 # app/main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from .api.routes import auth, rooms, reservations, services, payments, reports, guests
 from .api.routes import branches
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Callable
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        return response
 
 app = FastAPI(title="HRGSMS API", version="1.0.0", description="Hotel Room and Guest Services Management System")
 
@@ -25,6 +38,9 @@ app.add_middleware(
 )
 
 
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include all routers
 app.include_router(auth.router)
