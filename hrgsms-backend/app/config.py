@@ -3,9 +3,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
-    DB_USER: str = "root"
-    DB_PASSWORD: str = "password"
-    DB_NAME: str = "hrgsms_db"
+    DB_USER: str = "hrgsms_usr"
+    DB_PASSWORD: str = "password"  # Replace with your actual password
+    DB_NAME: str = "hrgsms"
 
     JWT_SECRET: str = "change-me"
     JWT_ALGORITHM: str = "HS256"
