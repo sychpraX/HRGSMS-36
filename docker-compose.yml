@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    container_name: hrgsms-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Make DB on host reachable from container (Windows/Mac docker):
+      - DB_HOST=host.docker.internal
+      # Override below with your own values or a backend/.env file
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=hrgsms_db
+      - APP_ENV=development
+    volumes:
+      - ./backend:/app
+      - backend_venv_cache:/usr/local/lib/python3.11/site-packages
+    working_dir: /app
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    container_name: hrgsms-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Frontend will call backend via host port 8000 from the browser
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  backend_venv_cache:
