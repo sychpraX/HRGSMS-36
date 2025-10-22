@@ -13,13 +13,22 @@ export default function RegisterPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(null); setError(null); setLoading(true);
+    setMessage(null);
+    setError(null);
+    setLoading(true);
     try {
-      const res = await apiClient.post("/auth/register", { username, password, role });
+      const res = await apiClient.post("/auth/register", {
+        username,
+        password,
+        role,
+      });
       setMessage(res.data?.message || "Registered successfully.");
-      setUsername(""); setPassword(""); setRole("Reception");
+      setUsername("");
+      setPassword("");
+      setRole("Reception");
     } catch (err: any) {
-      const detail = err?.response?.data?.detail || err?.message || "Registration failed";
+      const detail =
+        err?.response?.data?.detail || err?.message || "Registration failed";
       setError(typeof detail === "string" ? detail : JSON.stringify(detail));
     } finally {
       setLoading(false);
@@ -33,27 +42,44 @@ export default function RegisterPage() {
         <p className="note">Register to access HRGSMS.</p>
         <form onSubmit={onSubmit}>
           <label>Username</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
 
           <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
           <label>Role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)} required>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            required
+          >
             <option value="Admin">Admin</option>
             <option value="Manager">Manager</option>
             <option value="Reception">Reception</option>
             <option value="Staff">Staff</option>
           </select>
 
-          <button type="submit" disabled={loading}>{loading ? "Registering..." : "Register"}</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
+          </button>
 
           {message && <p className="success">{message}</p>}
           {error && <p className="error">{error}</p>}
         </form>
         <div style={{ marginTop: 8 }}>
           <span className="note">Already have an account? </span>
-          <Link href="/login" className="link">Sign in</Link>
+          <Link href="/login" className="link">
+            Sign in
+          </Link>
         </div>
       </div>
       <div className="card">
