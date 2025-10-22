@@ -1,7 +1,7 @@
 {
-  "/payments/page": "app/payments/page.js",
   "/reservations/page": "app/reservations/page.js",
   "/services/page": "app/services/page.js",
-  "/reports/guestBilling/page": "app/reports/guestBilling/page.js",
-  "/reports/serviceUsage/page": "app/reports/serviceUsage/page.js"
+  "/payments/page": "app/payments/page.js",
+  "/reports/serviceUsage/page": "app/reports/serviceUsage/page.js",
+  "/reports/guestBilling/page": "app/reports/guestBilling/page.js"
 }
