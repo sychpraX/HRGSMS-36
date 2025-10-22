@@ -16,6 +16,7 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
     role: str = "Reception"
+    branch: int
 
     @field_validator("role")
     @classmethod

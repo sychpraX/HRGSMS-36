@@ -3,6 +3,7 @@ import { useState } from "react";
 import apiClient from "@/lib/apiClient";
 import { saveRole, saveToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -26,6 +27,10 @@ export default function LoginPage() {
           <label>Username</label><input value={username} onChange={(e) => setUsername(e.target.value)} required />
           <label>Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <button type="submit">Sign in</button>
+          <div style={{ marginTop: 8 }}>
+            <span className="note">New here? </span>
+            <Link href="/register" className="link">Register</Link>
+          </div>
           {error && <p className="error">{error}</p>}
         </form>
       </div>

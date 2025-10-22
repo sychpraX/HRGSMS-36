@@ -14,6 +14,7 @@ def revenue_report(
     end_date: date = Query(..., description="End date"),
     user=Depends(require_roles("Admin", "Manager"))
 ):
+   
     """Get revenue report for a branch within a date range."""
     return get_revenue_report(branch_id, start_date, end_date)
 
@@ -21,7 +22,7 @@ def revenue_report(
 def occupancy_report(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
-    user=Depends(require_roles("Admin", "Manager"))
+    user=Depends(require_roles("Admin", "Manager","Reception","Staff"))
 ):
     """Get revenue report for a branch within a date range."""
     return get_room_occupancy_report(start_date, end_date)
@@ -29,7 +30,7 @@ def occupancy_report(
 
 @router.get("/guestBilling")
 def occupancy_report(
-    user=Depends(require_roles("Admin", "Manager"))
+    user=Depends(require_roles("Admin", "Manager","Reception",))
 ):
     """Get revenue report for a branch within a date range."""
     return get_guest_billing_summary()
@@ -37,7 +38,7 @@ def occupancy_report(
 
 @router.get("/serviceUsage")
 def occupancy_report(
-    user=Depends(require_roles("Admin", "Manager"))
+    user=Depends(require_roles("Admin", "Manager","Reception","Staff"))
 ):
     """Get revenue report for a branch within a date range."""
     return get_service_usage_per_room()
@@ -49,5 +50,6 @@ def customer_trends(
     end_date: date = Query(..., description="End date"),
     user=Depends(require_roles("Admin", "Manager"))
 ):
+    
     """Get customer trends for a branch within a date range."""
     return get_customer_trends(branch_id, start_date, end_date)

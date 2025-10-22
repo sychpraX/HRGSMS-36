@@ -1,87 +1,150 @@
--- Branches
-INSERT INTO Branch (branchID, location,rating,phone,email) VALUES
-  (1, 'Kandy', 4.7, '+94773853091' ,'skyKandy@gamil.com'),
-  (2, 'Galle', '4.5', '+94775005806', 'skyGalle@gmail.com'),
-  (3, 'Nuwara Eliya', '3.6', '+94773274105', 'skyEliya@gmmail.com');
+USE hrgsms_db;
 
--- Room Types
-INSERT INTO Room_Type (typeID, typeName, capacity, currRate) VALUES
-  (1, 'Single', 1, 8000.00),
-  (2, 'Double', 2, 12000.00),
-  (3, 'Suite', 4, 25000.00),
-  (4, 'Deluxe', 3, 18000.00);
+-- ==============================
+-- BRANCHES
+-- ==============================
+INSERT INTO Branch (location, rating, phone, email)
+VALUES 
+('Colombo', 4.5, '011-2223344', 'colombo@skynest.com'),
+('Kandy', 4.2, '081-4455667', 'kandy@skynest.com'),
+('Galle', 4.0, '091-7788990', 'galle@skynest.com');
 
--- Rooms (reference typeID and branchID)
-INSERT INTO Room (roomID, branchID, typeID, roomNo, roomStatus) VALUES
-  (1, 1, 1, 101, 'Available'),
-  (2, 1, 2, 102, 'Available'),
-  (3, 1, 3, 103, 'Available'),
-  (4, 2, 1, 201, 'Available'),
-  (5, 2, 2, 202, 'Available'),
-  (6, 2, 3, 203, 'Available'),
-  (7, 3, 1, 301, 'Available'),
-  (8, 3, 2, 302, 'Available'),
-  (9, 3, 3, 303, 'Available'),
-  (10, 3, 4, 304, 'Available');
-  
-  -- Chargeble Services (6 services)
-INSERT INTO Chargeble_Service (serviceID, serviceType, unit, ratePerUnit) VALUES
-  (1, 'Spa', 'per person', 5000.00),
-  (2, 'Pool', 'per person', 1500.00),
-  (3, 'Room Service', 'per request', 1000.00),
-  (4, 'Laundry', 'per kg', 1000.00),
-  (5, 'Minibar', 'per item', 500.00),
-  (6, 'Airport Shuttle', 'per request', 3000.00);
-  
-  -- Guests (5 guests)
-INSERT INTO Guest (guestID, firstName, lastName, phone, email,idNumber) VALUES
-  (1, 'Alice', 'Smith', '+9412345678', 'alice@example.com',333388222888),
-  (2, 'Bob', 'Johnson', '+9423456789', 'bob@example.com',200308111555),
-  (3, 'Carol', 'Williams', '+9434567890', 'carol@example.com',2002068113385),
-  (4, 'David', 'Brown', '+9445678901', 'david@example.com',200108391824),
-  (5, 'Eve', 'Davis', '+9456789012', 'eve@example.com',200802300123);
+-- ==============================
+-- ROOM TYPES
+-- ==============================
+INSERT INTO Room_Type (typeName, capacity, currRate)
+VALUES 
+('Standard', 2, 12000.00),
+('Deluxe', 3, 18000.00),
+('Suite', 4, 25000.00);
 
--- Bookings (8 bookings)
-INSERT INTO Booking (bookingID, guestID, branchID, roomID, rate, checkInDate, checkOutDate, numGuests, bookingStatus) VALUES
-  (1, 1, 1, 1, 80.00, '2025-10-01', '2025-10-03', 1, 'CheckedOut'),
-  (2, 2, 1, 2, 120.00, '2025-10-02', '2025-10-05', 2, 'CheckedOut'),
-  (3, 3, 2, 4, 85.00, '2025-10-04', '2025-10-06', 1, 'CheckedOut'),
-  (4, 4, 2, 5, 130.00, '2025-10-05', '2025-10-07', 2, 'CheckedOut'),
-  (5, 5, 3, 7, 90.00, '2025-10-06', '2025-10-09', 1, 'CheckedOut'),
-  (6, 1, 3, 8, 140.00, '2025-10-07', '2025-10-10', 2, 'CheckedIn'),
-  (7, 2, 3, 9, 270.00, '2025-10-08', '2025-10-12', 4, 'Booked'),
-  (8, 3, 1, 3, 250.00, '2025-10-09', '2025-10-11', 3, 'Booked');
-  
--- Service usage (various bookings and services)
-INSERT INTO Service_Usage (usageID, bookingID, serviceID, rate, quantity, usedAt) VALUES
-  (1, 1, 1, 5000.00, 1, '2025-10-01 10:00:00'),
-  (2, 1, 3, 1000.00, 2, '2025-10-02 12:00:00'),
-  (3, 2, 2, 1500.00, 2, '2025-10-03 09:00:00'),
-  (4, 3, 4, 1000.00, 3, '2025-10-04 14:00:00'),
-  (5, 4, 5, 500.00, 4, '2025-10-05 16:00:00'),
-  (6, 5, 6, 3000.00, 1, '2025-10-06 11:00:00'),
-  (7, 6, 1, 5000.00, 1, '2025-10-07 10:00:00'),
-  (8, 7, 3, 1000.00, 1, '2025-10-08 13:00:00');
-  
-  INSERT INTO Invoice (
-  invoiceID, bookingID, latePolicyID, policyID, discountCode, paymentPlan,
-  roomCharges, serviceCharges, discountAmount, taxAmount, settledAmount, invoiceStatus
-) VALUES
-  (1, 1, 1, 1, 1, 'Full', 16000.00, 9000.00, 2000.00, 2500.00, 28500.00, 'Paid'),
-  (2, 2, NULL, 2, 2, 'Installment', 3600.00, 3000.00, 1500.00, 1950.0, 2000.00, 'Partially Paid'),
-  (3, 3, 2, 1, NULL, 'Full', 17000.00, 3000.00, 0.00, 2000.00, 1000.00, 'Partially Paid'),
-  (4, 4, NULL, 1, NULL, 'Full', 26000.00, 3200.00, 0.00, 2920.00, 29200.00, 'Paid'),
-  (5, 5, 1, 2, 1, 'Installment', 27000.00, 3000.00, 2000.00, 1500.00, 10000.00, 'Partially Paid'),
-  (6, 6, NULL, 1, NULL, 'Full', 42000.00, 5000.00, 0.00, 4700.00, 51700.00, 'Paid'),
-  (7, 7, NULL, 2, NULL, 'Full', 108000.00, 2000.00, 0.00, 5500.00, 0.00, 'Pending'),
-  (8, 8, 2, 1, 2, 'Full', 50000.00, 0.00, 1500.00, 51.50, 0.00, 'Pending');
+-- ==============================
+-- ROOMS (10 per branch)
+-- ==============================
+-- Colombo
+INSERT INTO Room (branchID, typeID, roomNo, roomStatus)
+VALUES
+(1, 1, 101, 'Available'), (1, 1, 102, 'Available'),
+(1, 2, 103, 'Available'), (1, 2, 104, 'Available'),
+(1, 2, 105, 'Available'), (1, 3, 106, 'Available'),
+(1, 3, 107, 'Available'), (1, 3, 108, 'Available'),
+(1, 1, 109, 'Available'), (1, 2, 110, 'Available');
 
-  -- Payments for invoices (at least 3 partial payments)
-INSERT INTO Payment (transactionID, invoiceID, transactionDate, paymentMethod, amount) VALUES
-  (1, 1, '2025-10-03', 'Card', 28500.00),           -- Full payment for invoice 1
-  (2, 2, '2025-10-05', 'Cash', 1000.00),           -- Partial payment for invoice 2
-  (3, 2, '2025-10-06', 'Online', 1000.00),         -- Partial payment for invoice 2
-  (4, 3, '2025-10-06', 'Card', 1000.00),           -- Partial payment for invoice 3
-  (5, 4, '2025-10-07', 'Card', 29200.00),           -- Full payment for invoice 4
-  (6, 5, '2025-10-09', 'Cash', 10000.00),           -- Partial payment for invoice 5
-  (7, 6, '2025-10-10', 'Online', 51700.00);         -- Full payment for invoice 6
+-- Kandy
+INSERT INTO Room (branchID, typeID, roomNo, roomStatus)
+VALUES
+(2, 1, 201, 'Available'), (2, 1, 202, 'Available'),
+(2, 2, 203, 'Available'), (2, 2, 204, 'Available'),
+(2, 2, 205, 'Available'), (2, 3, 206, 'Available'),
+(2, 3, 207, 'Available'), (2, 3, 208, 'Available'),
+(2, 1, 209, 'Available'), (2, 2, 210, 'Available');
+
+-- Galle
+INSERT INTO Room (branchID, typeID, roomNo, roomStatus)
+VALUES
+(3, 1, 301, 'Available'), (3, 1, 302, 'Available'),
+(3, 2, 303, 'Available'), (3, 2, 304, 'Available'),
+(3, 2, 305, 'Available'), (3, 3, 306, 'Available'),
+(3, 3, 307, 'Available'), (3, 3, 308, 'Available'),
+(3, 1, 309, 'Available'), (3, 2, 310, 'Available');
+
+-- ==============================
+-- CHARGEABLE SERVICES
+-- ==============================
+INSERT INTO Chargeble_Service (unit, ratePerUnit, serviceType)
+VALUES
+('per person', 3000.00, 'Spa'),
+('per request', 1500.00, 'Room Service'),
+('per item', 800.00, 'Laundry'),
+('per request', 1000.00, 'Minibar'),
+('per person', 2500.00, 'Pool'),
+('per request', 5000.00, 'Airport Shuttle');
+
+-- ==============================
+-- TAX AND DISCOUNT POLICIES
+-- ==============================
+INSERT INTO Tax_Policy (rate, appliesTo, policyName)
+VALUES
+(0.08, 'All', 'Standard Tax'),
+(0.10, 'Luxury', 'Luxury Tax');
+
+INSERT INTO Discount (discountName, discountCondition, validFrom, validTo, discountValue)
+VALUES
+('Loyalty Bonus', 'For returning customers', '2025-01-01', '2025-12-31', 1000.00),
+('Seasonal Offer', 'During off-season', '2025-06-01', '2025-12-31', 1500.00);
+
+-- ==============================
+-- LATE CHECKOUT POLICY
+-- ==============================
+INSERT INTO Late_Checkout_Policy (latePolicyID, amount)
+VALUES (1, 3000.00), (2, 5000.00);
+
+-- ==============================
+-- GUESTS
+-- ==============================
+INSERT INTO Guest (firstName, lastName, phone, email, idNumber)
+VALUES
+('Ruwan', 'Perera', '0771112233', 'ruwan@example.com', 'NIC123'),
+('Anjali', 'Fernando', '0772223344', 'anjali@example.com', 'NIC124'),
+('Kavindu', 'Silva', '0773334455', 'kavindu@example.com', 'NIC125'),
+('Sithmi', 'De Silva', '0774445566', 'sithmi@example.com', 'NIC126'),
+('Nimal', 'Jayasinghe', '0775556677', 'nimal@example.com', 'NIC127'),
+('Chamari', 'Ranasinghe', '0776667788', 'chamari@example.com', 'NIC128'),
+('Kasun', 'Hettiarachchi', '0777778899', 'kasun@example.com', 'NIC129');
+
+-- ==============================
+-- BOOKINGS
+-- ==============================
+INSERT INTO Booking (guestID, branchID, roomID, rate, checkInDate, checkOutDate, numGuests, bookingStatus)
+VALUES
+(1, 1, 101, 12000, '2025-10-10', '2025-10-12', 2, 'CheckedOut'),
+(2, 1, 102, 12000, '2025-10-18', '2025-10-20', 2, 'CheckedIn'),
+(3, 2, 201, 12000, '2025-10-15', '2025-10-18', 2, 'CheckedOut'),
+(4, 2, 203, 18000, '2025-10-21', '2025-10-23', 3, 'Booked'),
+(5, 3, 301, 12000, '2025-10-05', '2025-10-07', 2, 'CheckedOut'),
+(6, 3, 305, 18000, '2025-10-20', '2025-10-23', 2, 'CheckedIn'),
+(7, 1, 107, 25000, '2025-09-30', '2025-10-03', 3, 'CheckedOut');
+
+-- ==============================
+-- INVOICES
+-- ==============================
+INSERT INTO Invoice (bookingID, policyID, discountCode, roomCharges, serviceCharges, discountAmount, settledAmount, invoiceStatus, taxAmount, latePolicyID, lateAmount)
+VALUES
+(1, 1, 1, 24000, 4000, 1000, 29000, 'Paid', 2000, 1, 3000),
+(2, 1, NULL, 24000, 3000, 0, 10000, 'Partially Paid', 1800, NULL, 0),
+(3, 2, NULL, 36000, 2500, 0, 38500, 'Paid', 4000, NULL, 0),
+(4, 1, 2, 36000, 0, 1500, 0, 'Pending', 2880, NULL, 0),
+(5, 1, NULL, 24000, 1500, 0, 25500, 'Paid', 1920, NULL, 0),
+(6, 2, 1, 54000, 6000, 1000, 30000, 'Partially Paid', 4800, NULL, 0),
+(7, 1, NULL, 75000, 5000, 0, 80000, 'Paid', 6400, NULL, 0);
+
+-- ==============================
+-- SERVICE USAGE (10 entries)
+-- ==============================
+INSERT INTO Service_Usage (usageID, bookingID, serviceID, rate, quantity, usedAt)
+VALUES
+(1, 1, 2, 1500, 2, '2025-10-10 10:00:00'),
+(2, 1, 4, 1000, 1, '2025-10-10 11:00:00'),
+(3, 2, 1, 3000, 1, '2025-10-19 09:00:00'),
+(4, 3, 3, 800, 2, '2025-10-16 14:00:00'),
+(5, 4, 2, 1500, 1, '2025-10-21 18:00:00'),
+(6, 5, 6, 5000, 1, '2025-10-06 06:00:00'),
+(7, 6, 1, 3000, 2, '2025-10-21 09:30:00'),
+(8, 6, 3, 800, 3, '2025-10-22 16:00:00'),
+(9, 7, 4, 1000, 2, '2025-09-30 10:30:00'),
+(10, 7, 2, 1500, 1, '2025-09-30 12:00:00');
+
+-- ==============================
+-- PAYMENTS (Including 4 partial)
+-- ==============================
+INSERT INTO Payment (invoiceID, transactionDate, paymentMethod, amount)
+VALUES
+(1, '2025-10-12', 'Card', 29000.00),
+(2, '2025-10-19', 'Cash', 5000.00),
+(2, '2025-10-20', 'Card', 5000.00),
+(3, '2025-10-18', 'Online', 38500.00),
+(4, '2025-10-22', 'Cash', 0.00),
+(5, '2025-10-07', 'Card', 25500.00),
+(6, '2025-10-21', 'Online', 20000.00),
+(6, '2025-10-22', 'Cash', 10000.00),
+(7, '2025-10-03', 'Card', 80000.00);

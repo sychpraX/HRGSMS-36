@@ -18,9 +18,9 @@ def authenticate(username: str, password: str) -> Optional[dict]:
     except Exception:
         return None
 
-def register(username: str, password: str, role: str) -> int:
+def register(username: str, password: str, role: str, branch: int) -> int:
     """Register new user using stored procedure."""
-    result = call_proc("sp_create_user", (username, password, role))
+    result = call_proc("sp_create_user", (username, password, role, branch))
     if result and len(result) > 0:
         return result[0]["userID"]
     raise Exception("Failed to create user")
