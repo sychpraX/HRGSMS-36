@@ -12,6 +12,9 @@ def create_reservation(payload: ReservationCreate, user=Depends(require_roles("A
         # Convert dates to datetime for the stored procedure
         check_in_dt = datetime.combine(payload.check_in_date, datetime.min.time())
         check_out_dt = datetime.combine(payload.check_out_date, datetime.min.time())
+        # Validate date ordering
+        if check_out_dt <= check_in_dt:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Check-out date must be after check-in date")
         
         booking_id = create_booking(
             payload.guest_id, 
