@@ -5,8 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 # System deps (add build tools only if needed)
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies separately for caching
 COPY requirements.txt ./
