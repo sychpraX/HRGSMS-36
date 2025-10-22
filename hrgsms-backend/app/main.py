@@ -1,6 +1,7 @@
 # app/main.py
 from fastapi import FastAPI, HTTPException
 from .api.routes import auth, rooms, reservations, services, payments, reports, guests
+from .api.routes import branches
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="HRGSMS API", version="1.0.0", description="Hotel Room and Guest Services Management System")
@@ -28,6 +29,7 @@ app.add_middleware(
 # Include all routers
 app.include_router(auth.router)
 app.include_router(rooms.router)
+app.include_router(branches.router)
 app.include_router(reservations.router)
 app.include_router(services.router)
 app.include_router(payments.router)
