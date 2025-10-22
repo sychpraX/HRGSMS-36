@@ -24,3 +24,9 @@ def get_room_occupancy_report(start_date: date, end_date: date) -> List[Dict]:
     """Get room occupancy according to date using stored procedure."""
     result = call_proc("sp_get_room_occupancy_report", (start_date, end_date))
     return result if result else []
+
+
+def get_customer_trends(branch_id: int, start_date: date, end_date: date) -> List[Dict]:
+    """Get customer trends according to date using stored procedure."""
+    result = call_proc("sp_customer_preference_trends", (branch_id, start_date, end_date))
+    return result if result else []

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, Query
 from datetime import date
 from typing import List, Dict
-from ...services.report_service import get_revenue_report, get_room_occupancy_report, get_guest_billing_summary, get_service_usage_per_room
+from ...services.report_service import get_customer_trends, get_revenue_report, get_room_occupancy_report, get_guest_billing_summary, get_service_usage_per_room
 from ...api.dependancies import require_roles
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -41,3 +41,13 @@ def occupancy_report(
 ):
     """Get revenue report for a branch within a date range."""
     return get_service_usage_per_room()
+
+@router.get("/customerTrends")
+def customer_trends(
+    branch_id: int = Query(..., description="Branch ID"),
+    start_date: date = Query(..., description="Start date"),
+    end_date: date = Query(..., description="End date"),
+    user=Depends(require_roles("Admin", "Manager"))
+):
+    """Get customer trends for a branch within a date range."""
+    return get_customer_trends(branch_id, start_date, end_date)
