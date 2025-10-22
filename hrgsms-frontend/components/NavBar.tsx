@@ -27,6 +27,7 @@ export default function NavBar() {
         <Link href="/reports/roomOccupancy">Occupancy</Link>
         <Link href="/reports/guestBilling">Guest Billing</Link>
         <Link href="/reports/serviceUsage">Service Usage</Link>
+        <Link href="/reports/customerTrends">Trends</Link>
       </div>
       <div className="right">
         {logged ? <span className="note">Role: <b>{role ?? "Unknown"}</b></span> : <Link href="/login">Login</Link>}
