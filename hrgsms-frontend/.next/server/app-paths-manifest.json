@@ -1,9 +1,7 @@
 {
-  "/reports/revenue/page": "app/reports/revenue/page.js",
-  "/reports/roomOccupancy/page": "app/reports/roomOccupancy/page.js",
-  "/reports/guestBilling/page": "app/reports/guestBilling/page.js",
-  "/reports/serviceUsage/page": "app/reports/serviceUsage/page.js",
   "/payments/page": "app/payments/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/guests/page": "app/guests/page.js"
+  "/reservations/page": "app/reservations/page.js",
+  "/services/page": "app/services/page.js",
+  "/reports/guestBilling/page": "app/reports/guestBilling/page.js",
+  "/reports/serviceUsage/page": "app/reports/serviceUsage/page.js"
 }

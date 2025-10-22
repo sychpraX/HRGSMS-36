@@ -1,9 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from ...api.dependancies import require_roles
+from typing import List
 from ...models.schemas import GuestCreate, GuestOut
 from ...services.booking_service import create_guest, get_guest
+from ...services.guest_service import get_all_guests
 
 router = APIRouter(prefix="/guests", tags=["guests"])
+
+@router.get("/", response_model=List[dict])
+def list_guests(user=Depends(require_roles("Admin", "Manager", "Reception"))):
+    """Get all guests for dropdown selection."""
+    return get_all_guests()
 
 @router.post("/", status_code=201)
 def create_guest_endpoint(

@@ -31,7 +31,7 @@ export default function ServiceUsage() {
       <button onClick={fetchReport}>Load</button>
 
       {rows.length>0 && (
-        <ChartBox type="bar" labels={labels} datasets={[{label:"Quantity", data: qty}, {label:"Amount", data: amt}]} />
+        <ChartBox type="bar" labels={labels} datasets={[{label:"Amount", data: amt}]} />
       )}
 
       <table>
