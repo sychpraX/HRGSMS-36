@@ -15,7 +15,7 @@ export default function NavBar() {
 
   return (
     <nav>
-      <div className="brand"><span style={{fontSize:18}}>🏨 HRGSMS</span></div>
+      <div className="brand"><span style={{fontSize:18}}>HRGSMS</span></div>
       <div className="links">
         <Link href="/dashboard">Dashboard</Link>
         <Link href="/guests">Guests</Link>
