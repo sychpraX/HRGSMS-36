@@ -15,7 +15,7 @@ def login(payload: LoginRequest):
 @router.post("/register", status_code=201)
 def register_user(payload: RegisterRequest):
     try:
-        user_id = register(payload.username, payload.password, payload.role)
+        user_id = register(payload.username, payload.password, payload.role, payload.branchID)
         return {"user_id": user_id, "message": "Registered"}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

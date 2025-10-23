@@ -1,4 +1,7 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/page": "app/page.js"
+  "/reports/revenue/page": "app/reports/revenue/page.js",
+  "/reports/customerTrends/page": "app/reports/customerTrends/page.js",
+  "/reports/guestBilling/page": "app/reports/guestBilling/page.js",
+  "/reservations/page": "app/reservations/page.js",
+  "/reports/roomOccupancy/page": "app/reports/roomOccupancy/page.js"
 }
